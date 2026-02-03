@@ -1,0 +1,36 @@
+{
+  "name": "movierecommender",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:frontend": "cd frontend && npm run dev",
+    "start:node": "cd node-backend && node index.js",
+    "start:ai": "cd ai-backend && uvicorn app:app --reload --port 8000",
+    "dev": "concurrently \"npm run start:frontend\" \"npm run start:node\" \"npm run start:ai\"",
+    "install:all": "npm install && cd frontend && npm install && cd ../node-backend && npm install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.13.4",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "framer-motion": "^12.29.2",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.563.0",
+    "mongoose": "^9.1.5",
+    "react-router-dom": "^6.30.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.24",
+    "concurrently": "^9.2.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
+  }
+}
