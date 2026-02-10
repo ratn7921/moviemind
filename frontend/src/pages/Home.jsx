@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, LogOut, Clapperboard, Sparkles, TrendingUp, History, Info, XCircle, Zap, Film, Star } from 'lucide-react';
+import { Search, LogOut, Clapperboard, Sparkles, TrendingUp, History, Info, XCircle, Zap, Film, Star, User } from 'lucide-react';
 import MovieCard from '../components/MovieCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Home = ({ user, setLogout }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [query, setQuery] = useState('');
     const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [recentSearches, setRecentSearches] = useState([]);
+    const [likedMovies, setLikedMovies] = useState([]);
     const [selectedMovie, setSelectedMovie] = useState(null);
 
     useEffect(() => {
-        const saved = localStorage.getItem('recentSearches');
-        if (saved) setRecentSearches(JSON.parse(saved));
-    }, []);
+        fetchLikedMovies();
+        if (location.state?.query) {
+            setQuery(location.state.query);
+            handleSearch(null, location.state.query);
+        }
+    }, [location.state]);
+
+    const fetchLikedMovies = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/user/profile`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setLikedMovies(res.data.likedMovies || []);
+        } catch (err) {
+            console.error('Failed to fetch profile', err);
+        }
+    };
 
     const handleSearch = async (e, forcedQuery = null) => {
         if (e) e.preventDefault();
@@ -26,20 +44,37 @@ const Home = ({ user, setLogout }) => {
         setError('');
 
         try {
+            const token = localStorage.getItem('token');
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/recommend?movie=${activeQuery}`);
+
             if (res.data.error) {
                 setError(res.data.error);
                 setRecommendations([]);
             } else {
                 setRecommendations(res.data.recommendations || []);
-                const newRecent = [activeQuery, ...recentSearches.filter(s => s !== activeQuery)].slice(0, 5);
-                setRecentSearches(newRecent);
-                localStorage.setItem('recentSearches', JSON.stringify(newRecent));
+                // Save to history on backend
+                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/user/history`,
+                    { query: activeQuery },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
             }
         } catch (err) {
             setError('Connection Failure. Please verify the backend is active.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const toggleLike = async (movie) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/user/like`,
+                { movie },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setLikedMovies(res.data);
+        } catch (err) {
+            console.error('Failed to toggle like', err);
         }
     };
 
@@ -73,51 +108,54 @@ const Home = ({ user, setLogout }) => {
             </div>
 
             {/* Floating Modern Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6">
+            <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 sm:py-6">
                 <motion.nav
                     initial={{ y: -100 }}
                     animate={{ y: 0 }}
-                    className="max-w-7xl mx-auto h-20 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] px-8 flex items-center justify-between shadow-2xl"
+                    className="max-w-7xl mx-auto h-16 sm:h-20 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl sm:rounded-[2rem] px-4 sm:px-8 flex items-center justify-between shadow-2xl"
                 >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <motion.div
                             whileHover={{ rotate: 180 }}
                             transition={{ duration: 0.5 }}
-                            className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30"
+                            className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-600 rounded-lg sm:rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30"
                         >
-                            <Film className="text-white" size={24} />
+                            <Film className="text-white" size={16} sm:size={24} />
                         </motion.div>
-                        <h1 className="text-2xl font-[900] tracking-tighter uppercase italic">
+                        <h1 className="text-sm sm:text-2xl font-[900] tracking-tighter uppercase italic">
                             MOVIE<span className="text-indigo-500">MIND</span>
                         </h1>
                     </div>
 
-                    <div className="flex items-center gap-6">
-                        <div className="hidden sm:flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
-                            <span className="text-xs font-bold text-gray-400">Curating for <span className="text-white">{user?.username}</span></span>
-                        </div>
+                    <div className="flex items-center gap-2 sm:gap-6">
+                        <button
+                            onClick={() => navigate('/profile')}
+                            className="group flex items-center gap-2 sm:gap-3 bg-white/5 border border-white/10 px-3 sm:px-4 py-2 rounded-xl sm:rounded-2xl hover:bg-white/10 transition-all"
+                        >
+                            <User size={16} className="text-indigo-500" />
+                            <span className="hidden sm:block text-xs font-bold text-gray-400">Profile <span className="text-white">{user?.username}</span></span>
+                        </button>
                         <button
                             onClick={setLogout}
-                            className="group p-3 bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/50 rounded-2xl transition-all"
+                            className="group p-2 sm:p-3 bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/50 rounded-xl sm:rounded-2xl transition-all"
                         >
-                            <LogOut size={20} className="text-gray-400 group-hover:text-rose-500 transition-colors" />
+                            <LogOut size={16} sm:size={20} className="text-gray-400 group-hover:text-rose-500 transition-colors" />
                         </button>
                     </div>
                 </motion.nav>
             </header>
 
             <main
-                className="max-w-7xl mx-auto px-6 pb-20 relative z-10 flex flex-col"
-                style={{ minHeight: recommendations.length > 0 ? 'auto' : '100vh', paddingTop: recommendations.length > 0 ? '12rem' : '0' }}
+                className="max-w-7xl mx-auto px-4 sm:px-6 pb-20 relative z-10 flex flex-col"
+                style={{ minHeight: recommendations.length > 0 ? 'auto' : '100vh', paddingTop: recommendations.length > 0 ? '8rem' : '0' }}
             >
 
                 {/* Animated Hero Section */}
-                <section className={`text-center transition-all duration-1000 ${recommendations.length > 0 ? 'mb-12' : 'flex-1 flex flex-col justify-center mb-0'}`}>
+                <section className={`text-center transition-all duration-1000 ${recommendations.length > 0 ? 'mb-8 sm:mb-12' : 'flex-1 flex flex-col justify-center mb-0'}`}>
                     <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="inline-flex items-center gap-3 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 px-8 py-3 rounded-full text-[10px] font-black tracking-[0.3em] mb-12 uppercase"
+                        className="inline-flex items-center gap-3 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 px-4 sm:px-8 py-2 sm:py-3 rounded-full text-[8px] sm:text-[10px] font-black tracking-[0.3em] mb-4 sm:mb-12 uppercase"
                     >
                         <Zap size={14} className="fill-current" /> Next-Gen Recommendation Engine
                     </motion.div>
@@ -125,10 +163,10 @@ const Home = ({ user, setLogout }) => {
                     <motion.h2
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-6xl sm:text-8xl font-[900] mb-12 leading-[0.9] tracking-tighter"
+                        className="text-4xl sm:text-8xl font-[900] mb-6 sm:mb-12 leading-[0.9] tracking-tighter"
                     >
                         Search   <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 animate-gradient-x">Cinema.</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500">Cinema.</span>
                     </motion.h2>
 
                     {/* Search Bar with Glass Interaction */}
@@ -144,39 +182,20 @@ const Home = ({ user, setLogout }) => {
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search a movie you admire..."
-                                className="w-full bg-white/5 border-2 border-white/10 rounded-[2.5rem] py-8 pl-20 pr-48 focus:outline-none focus:border-indigo-500 transition-all text-2xl font-bold placeholder:text-gray-700 backdrop-blur-xl shadow-2xl"
+                                placeholder="Search a movie..."
+                                className="w-full bg-white/5 border-2 border-white/10 rounded-[1.5rem] sm:rounded-[2.5rem] py-4 sm:py-8 pl-12 sm:pl-20 pr-32 sm:pr-48 focus:outline-none focus:border-indigo-500 transition-all text-lg sm:text-2xl font-bold placeholder:text-gray-700 backdrop-blur-xl shadow-2xl"
                             />
-                            <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-500 transition-colors" size={32} />
+                            <Search className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-500 transition-colors" size={24} sm:size={32} />
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-800 text-white font-black py-5 px-10 rounded-[1.8rem] transition-all shadow-xl shadow-indigo-600/30 flex items-center gap-3 active:scale-95 disabled:scale-100"
+                                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-800 text-white font-black py-2 sm:py-5 px-4 sm:px-10 rounded-xl sm:rounded-[1.8rem] transition-all shadow-xl shadow-indigo-600/30 flex items-center gap-2 sm:gap-3 active:scale-95 disabled:scale-100"
                             >
-                                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={18} />}
-                                {loading ? 'ANALYZING' : 'DISCOVER'}
+                                {loading ? <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={16} sm:size={18} />}
+                                <span className="text-[10px] sm:text-sm">{loading ? 'ANALYZING' : 'DISCOVER'}</span>
                             </button>
                         </form>
                     </motion.div>
-
-                    {/* Search History Chips */}
-                    <div className="flex flex-wrap justify-center gap-4 mt-12">
-                        <AnimatePresence>
-                            {recentSearches.map((s, i) => (
-                                <motion.button
-                                    key={s}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, scale: 0.5 }}
-                                    transition={{ delay: i * 0.1 }}
-                                    onClick={() => { setQuery(s); handleSearch(null, s); }}
-                                    className="text-[11px] font-black text-gray-400 hover:text-white bg-white/5 hover:bg-indigo-600 border border-white/10 hover:border-indigo-500 px-6 py-2.5 rounded-full transition-all uppercase tracking-widest"
-                                >
-                                    {s}
-                                </motion.button>
-                            ))}
-                        </AnimatePresence>
-                    </div>
                 </section>
 
                 {/* Results Area */}
@@ -187,16 +206,16 @@ const Home = ({ user, setLogout }) => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
-                                className="bg-rose-500/10 border border-rose-500/20 p-12 rounded-[3.5rem] text-center max-w-2xl mx-auto backdrop-blur-xl"
+                                className="bg-rose-500/10 border border-rose-500/20 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3.5rem] text-center max-w-2xl mx-auto backdrop-blur-xl"
                             >
-                                <XCircle className="text-rose-500 mx-auto mb-6" size={56} />
-                                <h4 className="text-3xl font-[900] text-white mb-4 tracking-tight italic">ENCOUNTERED AN ERROR</h4>
-                                <p className="text-gray-400 font-medium mb-8 leading-relaxed px-10">{error}</p>
+                                <XCircle className="text-rose-500 mx-auto mb-4 sm:mb-6" size={40} sm:size={56} />
+                                <h4 className="text-xl sm:text-3xl font-[900] text-white mb-2 sm:mb-4 tracking-tight italic uppercase text-rose-500">ERROR DETECTED</h4>
+                                <p className="text-gray-400 text-xs sm:text-sm font-medium mb-6 sm:mb-8 leading-relaxed px-4">{error}</p>
                                 <button
                                     onClick={() => setError('')}
-                                    className="bg-rose-500 hover:bg-rose-600 text-white font-black px-10 py-4 rounded-2xl transition-all shadow-lg shadow-rose-500/20"
+                                    className="bg-rose-500 hover:bg-rose-600 text-white text-xs font-black px-6 sm:px-10 py-3 sm:py-4 rounded-xl transition-all shadow-lg shadow-rose-500/20"
                                 >
-                                    TRY AGAIN
+                                    BACK TO MISSION
                                 </button>
                             </motion.div>
                         )}
@@ -206,22 +225,26 @@ const Home = ({ user, setLogout }) => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 key="results"
-                                className="space-y-16"
+                                className="space-y-8 sm:space-y-16"
                             >
-                                <div className="flex items-end justify-between border-b border-white/5 pb-10">
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-16 h-1 w-20 bg-indigo-600 rounded-full" />
-                                        <h3 className="text-5xl font-[900] uppercase italic tracking-tighter">Matches for You</h3>
-                                    </div>
-                                    <div className="hidden md:flex flex-col items-end gap-2 text-[10px] text-gray-600 font-black uppercase tracking-[0.2em]">
-                                        <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" /> Algorithm v4.2 Active</span>
-                                        <span>Confidence: 98.4%</span>
+                                <div className="flex items-end justify-between border-b border-white/5 pb-6 sm:pb-10">
+                                    <div className="flex items-center gap-4 sm:gap-6">
+                                        <div className="hidden sm:block w-16 h-1 w-20 bg-indigo-600 rounded-full" />
+                                        <h3 className="text-2xl sm:text-5xl font-[900] uppercase italic tracking-tighter">Matches for You</h3>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-10 justify-center">
+                                {/* Responsive Grid: 2 columns on mobile, 3 on md, 4 on lg, 5 on xl */}
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-10 justify-center">
                                     {recommendations.map((movie, i) => (
-                                        <MovieCard key={i} movie={movie} index={i} onShowDetails={setSelectedMovie} />
+                                        <MovieCard
+                                            key={i}
+                                            movie={movie}
+                                            index={i}
+                                            onShowDetails={setSelectedMovie}
+                                            isLiked={likedMovies.some(m => m.id === movie.id)}
+                                            onToggleLike={toggleLike}
+                                        />
                                     ))}
                                 </div>
                             </motion.div>
@@ -229,16 +252,16 @@ const Home = ({ user, setLogout }) => {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="text-center py-40 border-2 border-dashed border-white/5 rounded-[4rem] group"
+                                className="text-center py-20 sm:py-40 border-2 border-dashed border-white/5 rounded-[2rem] sm:rounded-[4rem] group"
                             >
                                 <motion.div
                                     animate={{ y: [0, -10, 0] }}
                                     transition={{ repeat: Infinity, duration: 3 }}
                                 >
-                                    <Film className="mx-auto mb-8 text-white/5 opacity-50 group-hover:text-indigo-500/20 transition-colors" size={100} />
+                                    <Film className="mx-auto mb-4 sm:mb-8 text-white/5 opacity-50 group-hover:text-indigo-500/20 transition-colors" size={60} sm:size={100} />
                                 </motion.div>
-                                <p className="text-4xl font-[900] text-gray-800 italic uppercase">Waiting for Command</p>
-                                <p className="text-xs text-gray-500 mt-4 font-black uppercase tracking-[0.5em]">Input movie title to generate similarity matrix</p>
+                                <p className="text-xl sm:text-4xl font-[900] text-gray-800 italic uppercase">System Standby</p>
+                                <p className="text-[8px] sm:text-xs text-gray-600 mt-2 sm:mt-4 font-black uppercase tracking-[0.5em]">Ready for input to find cinema matches</p>
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -248,7 +271,7 @@ const Home = ({ user, setLogout }) => {
             {/* Premium Details Modal */}
             <AnimatePresence>
                 {selectedMovie && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -260,66 +283,67 @@ const Home = ({ user, setLogout }) => {
                             initial={{ opacity: 0, scale: 0.9, y: 40 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                            className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl"
+                            className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl"
                         >
-                            <div className="p-12">
-                                <div className="flex justify-between items-start mb-8">
+                            <div className="p-6 sm:p-12">
+                                <div className="flex justify-between items-start mb-6 sm:mb-8">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-2 h-12 bg-indigo-600 rounded-full" />
-                                        <h2 className="text-4xl font-[900] uppercase italic tracking-tighter leading-none">
+                                        <div className="w-1.5 sm:w-2 h-8 sm:h-12 bg-indigo-600 rounded-full" />
+                                        <h2 className="text-2xl sm:text-4xl font-[900] uppercase italic tracking-tighter leading-none pr-4">
                                             {selectedMovie.title}
                                         </h2>
                                     </div>
                                     <button
                                         onClick={() => setSelectedMovie(null)}
-                                        className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all"
+                                        className="p-2 sm:p-3 bg-white/5 hover:bg-white/10 rounded-xl sm:rounded-2xl transition-all"
                                     >
-                                        <XCircle size={24} className="text-gray-500" />
+                                        <XCircle size={20} sm:size={24} className="text-gray-500" />
                                     </button>
                                 </div>
 
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="flex items-center gap-2 bg-yellow-500/10 text-yellow-500 px-4 py-2 rounded-xl text-xs font-black">
-                                        <Star size={14} fill="currentColor" />
+                                <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                                    <div className="flex items-center gap-2 bg-yellow-500/10 text-yellow-500 px-3 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black">
+                                        <Star size={12} sm:size={14} fill="currentColor" />
                                         {selectedMovie.vote_average?.toFixed(1) || 'N/A'}
                                     </div>
-                                    <div className="text-[10px] text-gray-500 font-black tracking-widest uppercase">
-                                        Popularity: {selectedMovie.popularity?.toFixed(0)}
-                                    </div>
+                                    <button
+                                        onClick={() => toggleLike(selectedMovie)}
+                                        className={`flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black transition-all ${likedMovies.some(m => m.id === selectedMovie.id) ? 'bg-rose-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-rose-500/20 hover:text-rose-500'}`}
+                                    >
+                                        <Heart size={12} sm:size={14} fill={likedMovies.some(m => m.id === selectedMovie.id) ? "currentColor" : "none"} />
+                                        {likedMovies.some(m => m.id === selectedMovie.id) ? 'LIKED' : 'LIKE'}
+                                    </button>
                                 </div>
 
-                                <div className="space-y-6">
-                                    <h4 className="text-xs font-black text-indigo-500 tracking-[0.3em] uppercase">Intelligence Overview</h4>
-                                    <p className="text-gray-400 text-lg leading-relaxed font-medium italic">
+                                <div className="space-y-4 sm:space-y-6">
+                                    <h4 className="text-[10px] sm:text-xs font-black text-indigo-500 tracking-[0.3em] uppercase">Intelligence Overview</h4>
+                                    <p className="text-gray-400 text-sm sm:text-lg leading-relaxed font-medium italic">
                                         "{selectedMovie.overview}"
                                     </p>
                                 </div>
 
                                 <button
                                     onClick={() => setSelectedMovie(null)}
-                                    className="mt-12 w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl"
+                                    className="mt-8 sm:mt-12 w-full bg-white text-black font-black py-4 sm:py-5 rounded-xl sm:rounded-2xl hover:bg-indigo-600 hover:text-white transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl text-xs sm:text-base"
                                 >
-                                    CLOSE DATA ARCHIVE
+                                    ACKNOWLEDGE
                                 </button>
                             </div>
-
-                            {/* Decorative bottom accent */}
-                            <div className="h-1 w-full bg-gradient-to-r from-transparent via-indigo-600 to-transparent opacity-30" />
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
 
-            <footer className="mt-40 border-t border-white/5 py-24 relative overflow-hidden bg-white/[0.01]">
+            <footer className="mt-20 sm:mt-40 border-t border-white/5 py-12 sm:py-24 relative overflow-hidden bg-white/[0.01]">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col items-center">
-                    <div className="flex gap-16 text-gray-600 font-black text-[11px] tracking-[0.4em] mb-12">
-                        <span className="hover:text-white cursor-pointer transition-colors">OS ARCHITECTURE</span>
-                        <span className="hover:text-white cursor-pointer transition-colors">NEURAL LINK</span>
-                        <span className="hover:text-white cursor-pointer transition-colors">like function is coming</span>
-                        <span className="hover:text-white cursor-pointer transition-colors">PROTOCOLS</span>
+                    <div className="flex flex-wrap justify-center gap-8 sm:gap-16 text-gray-600 font-black text-[8px] sm:text-[11px] tracking-[0.4em] mb-8 sm:mb-12">
+                        <span className="hover:text-white cursor-pointer transition-colors uppercase">Data Nodes</span>
+                        <span className="hover:text-white cursor-pointer transition-colors uppercase">Neural Link</span>
+                        <span className="hover:text-white cursor-pointer transition-colors uppercase">Sync Status</span>
+                        <span className="hover:text-white cursor-pointer transition-colors uppercase">Protocols</span>
                     </div>
-                    <div className="w-px h-20 bg-gradient-to-t from-transparent via-indigo-600/50 to-transparent mb-12" />
-                    <p className="text-gray-700 text-[10px] font-bold tracking-widest italic">&copy; 2026 MOVIEMIND CO. EVOLVED CINEMATIC INTELLIGENCE.</p>
+                    <div className="w-px h-12 sm:h-20 bg-gradient-to-t from-transparent via-indigo-600/50 to-transparent mb-8 sm:mb-12" />
+                    <p className="text-gray-700 text-[8px] sm:text-[10px] font-bold tracking-widest italic text-center uppercase">&copy; 2026 MOVIEMIND ARCHIVE. ALL COGNITIVE RIGHTS RESERVED.</p>
                 </div>
             </footer>
         </div>

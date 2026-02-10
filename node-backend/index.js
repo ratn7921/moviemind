@@ -8,6 +8,7 @@ const axios = require('axios');
 const Redis = require('ioredis');
 const authRoutes = require('./routes/auth');
 const recommendRoutes = require('./routes/recommend');
+const userRoutes = require('./routes/user');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,6 +47,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api', recommendRoutes);
 
 // Connect to MongoDB

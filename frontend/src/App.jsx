@@ -2,20 +2,20 @@ import React, { useState, useEffect } from 'react';
 import Loader from './components/Loader';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Profile from './pages/Profile';
 import { AnimatePresence } from 'framer-motion';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        // Check for existing session
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
             setUser(JSON.parse(savedUser));
         }
 
-        // Force 1.5s loading time for professional feel
         const timer = setTimeout(() => {
             setLoading(false);
         }, 1500);
@@ -32,15 +32,23 @@ function App() {
     if (loading) return <Loader />;
 
     return (
-        <div className="App h-full">
-            <AnimatePresence mode="wait">
-                {!user ? (
-                    <Login key="login" setLogin={setUser} />
-                ) : (
-                    <Home key="home" user={user} setLogout={handleLogout} />
-                )}
-            </AnimatePresence>
-        </div>
+        <Router>
+            <div className="App h-full">
+                <AnimatePresence mode="wait">
+                    <Routes>
+                        {!user ? (
+                            <Route path="*" element={<Login setLogin={setUser} />} />
+                        ) : (
+                            <>
+                                <Route path="/" element={<Home user={user} setLogout={handleLogout} />} />
+                                <Route path="/profile" element={<Profile user={user} setLogout={handleLogout} />} />
+                                <Route path="*" element={<Navigate to="/" />} />
+                            </>
+                        )}
+                    </Routes>
+                </AnimatePresence>
+            </div>
+        </Router>
     );
 }
 
