@@ -91,7 +91,7 @@ const MovieCard = ({ movie, index, onShowDetails, isLiked, onToggleLike }) => {
                             onClick={() => onShowDetails(movie)}
                             className="flex-1 bg-white text-black text-[8px] sm:text-[11px] font-black py-2 sm:py-4 rounded-lg sm:rounded-2xl flex items-center justify-center gap-1 sm:gap-2 hover:bg-indigo-500 hover:text-white transition-all transform hover:scale-105 active:scale-95 shadow-xl"
                         >
-                            <Info size={10} className="sm:size-14" />
+                            <Info className="w-4 h-4 sm:w-5 sm:h-5" />
                             INFO
                         </button>
                     </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Loader from './components/Loader';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Profile from './pages/Profile';
+import Home from './pages/Home.jsx';
+import Login from './pages/Login.jsx';
+import Profile from './pages/Profile.jsx';
 import { AnimatePresence } from 'framer-motion';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
