@@ -1,13 +1,13 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const axios = require('axios');
 const Redis = require('ioredis');
 const authRoutes = require('./routes/auth');
 const recommendRoutes = require('./routes/recommend');
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
