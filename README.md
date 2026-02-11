@@ -1,162 +1,147 @@
-# 🎬 MovieMind
+cd ..
+# 🎬 MovieMind: AI-Powered Movie Recommendation System
 
-MovieMind is a **cinematic AI‑powered movie recommendation platform** with authentication, animated UI, and intelligent similarity‑based movie discovery. It is built using **React**, **Node.js**, and a **Python AI backend**, following modern UI/UX and full‑stack best practices.
+MovieMind is a premium, full-stack cinematic platform that provides intelligent movie recommendations using Machine Learning. It features a stunning, animated React UI, a robust Node.js API gateway, and a Python-powered recommendation engine.
 
-🌐 **Live Demo (Frontend)**: [https://agent-698429ad8380623c8c--profound-gelato-4703f0.netlify.app/](https://agent-698429ad8380623c8c--profound-gelato-4703f0.netlify.app/)
+🌐 **Live Demo (Frontend)**: [MovieMind on Netlify](https://therdysmovierecommendationsystem.netlify.app/)
 
 ---
 
 ## ✨ Features
 
-* 🔐 User authentication (secure access flow)
-* 🎥 AI‑powered movie recommendations based on similarity
-* ⚡ Animated, cinematic UI/UX
-* 🧠 Python‑based recommendation engine
-* 🌍 Deployed frontend & backend (Netlify + Render)
-* 🧩 Modular architecture (frontend, node backend, AI backend)
+- 🔐 **Secure Authentication**: User registration and login flow with JWT.
+- 🎥 **Smart Recommendations**: Similarity-based discovery using Python AI.
+- 🎨 **Premium UI/UX**: Glassmorphism, dynamic gradients, and smooth Framer Motion animations.
+- ⚡ **Performance Optimized**: Redis-based caching layer for lightning-fast repeated queries.
+- 📱 **Fully Responsive**: Optimized for desktop, tablet, and mobile viewing.
+- 🖼️ **TMDB Integration**: Dynamic fetching of high-quality movie posters and details.
 
 ---
 
 ## 🧱 Tech Stack
 
 ### Frontend
-
-* React.js
-* Modern UI animations
-* Deployed on **Netlify**
+- **React.js** (Vite)
+- **Tailwind CSS** (Styling)
+- **Framer Motion** (Animations)
+- **Lucide React** (Icons)
+- **Netlify** (Deployment)
 
 ### Backend (API Gateway)
-
-* Node.js
-* Express.js
-* Handles API routing & auth
-* Deployed on **Render**
+- **Node.js** & **Express.js**
+- **MongoDB** (User Data & Favorites)
+- **Redis** (Caching Logic)
+- **Render** (Deployment)
 
 ### AI Backend
-
-* Python
-* Similarity‑based recommendation logic
-* Exposed via REST API
+- **Python** (FastAPI/Flask)
+- **Scikit-learn** (Cosine Similarity)
+- **Pandas** (Dataset Processing)
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 moviemind/
-│
-├── frontend/          # React frontend (UI/UX)
-├── node-backend/      # Node.js API layer
-├── ai-backend/        # Python recommendation engine
-│
-├── package.json
-├── README.md
-└── LICENSE
+├── frontend/          # React (Vite) application
+├── node-backend/      # Node.js Express API & Auth layer
+├── ai-backend/        # Python Recommendation Service
+└── README.md
 ```
 
 ---
 
-## 🔁 System Architecture Diagram
+## 🔁 System Architecture
 
 ```mermaid
 graph TD
     A[User / Browser] --> B[React Frontend - Netlify]
-    B -->|API Request| C[Node.js Backend - Render]
-    C -->|Fetch Recommendation| D[Python AI Backend]
-    D -->|Similarity Results| C
-    C -->|JSON Response| B
+    B -->|REST API| C[Node.js Backend - Render]
+    C -->|Internal Sync| D[Python AI Backend]
+    C -->|Persistence| E[MongoDB Atlas]
+    C -->|Cache| F[Redis Cloud]
+    D -->|Similarity Matrix| C
 ```
-
-### 🔍 Architecture Explanation
-
-1. **User** interacts with the React frontend.
-2. **Frontend** sends a request (movie name) to the Node.js backend.
-3. **Node.js backend** acts as a bridge and API gateway.
-4. **AI backend (Python)** processes similarity logic.
-5. Recommendations are returned step‑by‑step back to the UI.
 
 ---
 
-## 🚨 Known Issue: CORS Error
+## 🚀 Getting Started
 
-### ❌ Error Message
+### 1. Prerequisites
+- Node.js (v18+)
+- Python (3.9+)
+- MongoDB (Local or Atlas)
+- Redis (Optional, for caching)
 
+### 2. Environment Setup
+
+#### Frontend (`frontend/.env`)
+```env
+VITE_TMDB_API_KEY=your_tmdb_key
+VITE_API_BASE_URL=http://localhost:3000
 ```
-Access to XMLHttpRequest at
-'https://moviemind-node-backend.onrender.com/api/recommend?movie=avatar'
-from origin
-'https://agent-698429ad8380623c8c--profound-gelato-4703f0.netlify.app'
-has been blocked by CORS policy:
-No 'Access-Control-Allow-Origin' header is present on the requested resource.
+
+#### Node Backend (`node-backend/.env`)
+```env
+PORT=3000
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_secret_key
+FASTAPI_URL=http://127.0.0.1:8000
+REDIS_URL=your_redis_url  # Optional
 ```
 
-### 🧠 Why This Happens
+### 3. Running Locally
 
-* The **frontend (Netlify)** and **backend (Render)** are on different domains.
-* The Node.js backend does **not allow cross‑origin requests** by default.
-* Browser security blocks the API call.
-
----
-
-## ✅ How to Fix the CORS Issue (Contribution Opportunity 👇)
-
-### Solution: Enable CORS in Node.js Backend
-
-Install CORS:
-
+**Start AI Backend:**
 ```bash
-npm install cors
+cd ai-backend
+pip install -r requirements.txt
+python app.py
 ```
 
-Update `index.js` / `app.js`:
-
-```js
-import cors from "cors";
-
-app.use(cors({
-  origin: "https://agent-698429ad8380623c8c--profound-gelato-4703f0.netlify.app",
-  methods: ["GET", "POST"],
-  credentials: true
-}));
+**Start Node Backend:**
+```bash
+cd node-backend
+npm install
+npm run dev
 ```
 
-✔ This will allow the frontend to access backend APIs safely.
+**Start Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 🛡 Deployment
+
+### Netlify (Frontend)
+The frontend is pre-configured with a `netlify.toml` to handle secret scanning for environment variables.
+- Ensure `VITE_API_BASE_URL` points to your Render backend.
+- Ensure `VITE_TMDB_API_KEY` is added to Netlify Environment Variables.
+
+### Render (Backend)
+- Deploy `node-backend` as a Web Service.
+- Deploy `ai-backend` as a Web Service (or Private Service).
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are **highly welcome** 🚀
-
-You can contribute by:
-
-* Fixing the **CORS issue**
-* Improving recommendation accuracy
-* Enhancing UI/UX animations
-* Adding authentication improvements
-* Writing tests or documentation
-
-### Steps to Contribute
-
-1. Fork the repository
-2. Create a new branch (`feature/fix-cors`)
-3. Commit your changes
-4. Open a Pull Request
-
----
-
-## 🛡 License
-
-This project is licensed under the **MIT License**.
+Contributions are welcome! Feel free to:
+1. Fork the repo.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
 ---
 
 ## ⭐ Support
 
-If you like this project:
+If you find this project useful, please consider giving it a ⭐ on GitHub!
 
-* ⭐ Star the repository
-* 🍴 Fork it
-* 🧠 Suggest improvements
-
-Built with passion for cinema & AI 🎥🤖
+Built with ❤️ by **Ratna** & **Antigravity AI**.

@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 
 router.get('/recommend', async (req, res) => {
-    const FASTAPI_URL = process.env.FASTAPI_URL || 'http://127.0.0.1:8000';
+    const FASTAPI_URL = (process.env.FASTAPI_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
     try {
         const { movie } = req.query;
         if (!movie) return res.status(400).json({ message: 'Movie parameter is required' });
