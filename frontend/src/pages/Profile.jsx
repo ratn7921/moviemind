@@ -5,7 +5,7 @@ import { User, Heart, History, LogOut, ChevronLeft, Trash2, Star, XCircle } from
 import { useNavigate } from 'react-router-dom';
 import MovieCard from '../components/MovieCard.jsx';
 
-const Profile = ({ user, setLogout }) => {
+const Profile = ({ user, setLogout, updateUser }) => {
     const navigate = useNavigate();
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -41,11 +41,12 @@ const Profile = ({ user, setLogout }) => {
     const updateAvatar = async (avatarUrl) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/user/profile/avatar`,
+            const res = await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/user/profile/avatar`,
                 { avatar: avatarUrl },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setProfileData({ ...profileData, avatar: avatarUrl });
+            updateUser({ avatar: avatarUrl }); // Update global user state
         } catch (err) {
             console.error('Failed to update avatar', err);
         }

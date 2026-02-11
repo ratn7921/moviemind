@@ -117,9 +117,15 @@ const Home = ({ user, setLogout }) => {
                     <div className="flex items-center gap-2 sm:gap-6">
                         <button
                             onClick={() => navigate('/profile')}
-                            className="group flex items-center gap-2 sm:gap-3 bg-white/5 border border-white/10 px-3 sm:px-4 py-2 rounded-xl sm:rounded-2xl hover:bg-white/10 transition-all"
+                            className="group flex items-center gap-2 sm:gap-3 bg-white/5 border border-white/10 px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl hover:bg-white/10 transition-all overflow-hidden"
                         >
-                            <User className="text-indigo-500 w-4 h-4 sm:w-5 sm:h-5" />
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/10 overflow-hidden flex-shrink-0">
+                                <img
+                                    src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'User'}&background=6366f1&color=fff&size=256`}
+                                    alt="avatar"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
                             <span className="hidden sm:block text-xs font-bold text-gray-400">Profile <span className="text-white">{user?.username}</span></span>
                         </button>
                         <button

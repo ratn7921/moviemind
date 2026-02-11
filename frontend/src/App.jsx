@@ -29,6 +29,12 @@ function App() {
         setUser(null);
     };
 
+    const updateUser = (updatedUser) => {
+        const newUser = { ...user, ...updatedUser };
+        setUser(newUser);
+        localStorage.setItem('user', JSON.stringify(newUser));
+    };
+
     if (loading) return <Loader />;
 
     return (
@@ -41,7 +47,7 @@ function App() {
                         ) : (
                             <>
                                 <Route path="/" element={<Home user={user} setLogout={handleLogout} />} />
-                                <Route path="/profile" element={<Profile user={user} setLogout={handleLogout} />} />
+                                <Route path="/profile" element={<Profile user={user} setLogout={handleLogout} updateUser={updateUser} />} />
                                 <Route path="*" element={<Navigate to="/" />} />
                             </>
                         )}

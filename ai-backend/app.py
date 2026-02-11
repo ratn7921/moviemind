@@ -97,7 +97,15 @@ def recommend(movie: str):
         reverse=True
     )[1:21]
 
-    return df.iloc[[i[0] for i in movie_indices]][['title', 'overview', 'vote_average', 'popularity']].to_dict('records')
+    recs = []
+    for i in movie_indices:
+        idx = i[0]
+        # Get specified columns and add 'id'
+        movie_data = df.iloc[idx][['title', 'overview', 'vote_average', 'popularity']].to_dict()
+        movie_data['id'] = int(idx)  # Add unique index as ID
+        recs.append(movie_data)
+    
+    return recs
 
 # -------------------- ROUTES --------------------
 
